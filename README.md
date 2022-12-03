@@ -1,225 +1,174 @@
-# Create T3 App
+# create-t3-turbo
 
-This is an app bootstrapped according to the [init.tips](https://init.tips) stack, also known as the T3-Stack.
+<img width="1758" alt="turbo2" src="https://user-images.githubusercontent.com/51714798/202427720-4ec5f285-41a5-4fed-a52f-20b89c5bc1b3.png">
 
-## Why are there `.js` files in here?
+## About
 
-As per [T3-Axiom #3](https://github.com/t3-oss/create-t3-app/tree/next#3-typesafety-isnt-optional), we take typesafety as a first class citizen. Unfortunately, not all frameworks and plugins support TypeScript which means some of the configuration files have to be `.js` files.
+Ever wondered how to migrate your T3 application into a monorepo? Stop right here! This is the perfect starter repo to get you running with the perfect stack!
 
-We try to emphasize that these files are javascript for a reason, by explicitly declaring its type (`cjs` or `mjs`) depending on what's supported by the library it is used by. Also, all the `js` files in this project are still typechecked using a `@ts-check` comment at the top.
+It uses [Turborepo](https://turborepo.org/) and contains:
 
-## What's next? How do I make an app with this?
+```
+.github
+  └─ workflows
+        └─ CI with pnpm cache setup
+.vscode
+  └─ Recommended extensions and settings for VSCode users
+apps
+  ├─ expo
+  |   ├─ Expo SDK 46
+  |   ├─ React Native using React 18
+  |   ├─ Tailwind using Nativewind
+  |   └─ Typesafe API calls using tRPC
+  └─ next.js
+      ├─ Next.js 13
+      ├─ React 18
+      ├─ TailwindCSS
+      └─ E2E Typesafe API Server & Client
+packages
+ ├─ api
+ |   └─ tRPC v10 router definition
+ ├─ auth
+     └─ authentication using next-auth. **NOTE: Only for Next.js app, not Expo**
+ └─ db
+     └─ typesafe db-calls using Prisma
+```
 
-We try to keep this project as simple as possible, so you can start with the most basic configuration and then move on to more advanced configuration.
+## Quick Start
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+To get it running, follow the steps below:
 
-- [Next-Auth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [TailwindCSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io) (using @next version? [see v10 docs here](https://alpha.trpc.io))
+### Setup dependencies
 
-Also checkout these awesome tutorials on `create-t3-app`.
+```diff
+# Install dependencies
+pnpm i
 
-- [Build a Blog With the T3 Stack - tRPC, TypeScript, Next.js, Prisma & Zod](https://www.youtube.com/watch?v=syEWlxVFUrY)
-- [Build a Live Chat Application with the T3 Stack - TypeScript, Tailwind, tRPC](https://www.youtube.com/watch?v=dXRRY37MPuk)
-- [Build a full stack app with create-t3-app](https://www.nexxel.dev/blog/ct3a-guestbook)
-- [A first look at create-t3-app](https://dev.to/ajcwebdev/a-first-look-at-create-t3-app-1i8f)
+# In packages/db/prisma update schema.prisma provider to use sqlite
+# or use your own database provider
+- provider = "postgresql"
++ provider = "sqlite"
 
-## How do I deploy this?
+# Configure environment variables.
+# There is an `.env.example` in the root directory you can use for reference
+cp .env.example .env
 
-### Vercel
+# Push the Prisma schema to your database
+pnpm db-push
+```
 
-We recommend deploying to [Vercel](https://vercel.com/?utm_source=t3-oss&utm_campaign=oss). It makes it super easy to deploy NextJs apps.
+### Configure Expo `dev`-script
 
-- Push your code to a GitHub repository.
-- Go to [Vercel](https://vercel.com/?utm_source=t3-oss&utm_campaign=oss) and sign up with GitHub.
-- Create a Project and import the repository you pushed your code to.
-- Add your environment variables.
-- Click **Deploy**
-- Now whenever you push a change to your repository, Vercel will automatically redeploy your website!
+> **Note:** If you want to use a physical phone with Expo Go, just run `pnpm dev` and scan the QR-code.
 
-### Docker
+#### Use iOS Simulator
 
-You can also dockerize this stack and deploy a container.
+1. Make sure you have XCode and XCommand Line Tools installed [as shown on expo docs](https://docs.expo.dev/workflow/ios-simulator/).
+2. Change the `dev` script at `apps/expo/package.json` to open the iOS simulator.
 
-Please note that Next.js requires a different process for buildtime (available in the frontend, prefixed by `NEXT_PUBLIC`) and runtime environment, server-side only, variables. In this demo we are using two variables, `NEXT_PUBLIC_FOO` and `BAR`. Pay attention to their positions in the `Dockerfile`, command-line arguments, and `docker-compose.yml`.
+```diff
++  "dev": "expo start --ios",
+```
 
-1. In your [next.config.mjs](./next.config.mjs), add the `standalone` output-option to your config:
+3. Run `pnpm dev` at the project root folder.
 
-   ```diff
-     export default defineNextConfig({
-       reactStrictMode: true,
-       swcMinify: true,
-   +   output: "standalone",
-     });
-   ```
+#### For Android
 
-2. Remove the `env`-import from [next.config.mjs](./next.config.mjs):
+1. Install Android Studio tools [as shown on expo docs](https://docs.expo.dev/workflow/android-studio-emulator/).
+2. Change the `dev` script at `apps/expo/package.json` to open the Android emulator.
 
-   ```diff
-   - import { env } from "./src/env/server.mjs";
-   ```
+```diff
++  "dev": "expo start --android",
+```
 
-3. Create a `.dockerignore` file with the following contents:
-   <details>
-   <summary>.dockerignore</summary>
+3. Run `pnpm dev` at the project root folder.
 
-   ```
-   .env
-   Dockerfile
-   .dockerignore
-   node_modules
-   npm-debug.log
-   README.md
-   .next
-   .git
-   ```
+## Deployment
 
-  </details>
+### Next.js
 
-4. Create a `Dockerfile` with the following contents:
-   <details>
-   <summary>Dockerfile</summary>
+#### Prerequisites
 
-   ```Dockerfile
-   ########################
-   #         DEPS         #
-   ########################
+_We do not recommend deploying a SQLite database on serverless environments since the data wouldn't be persisted. I provisioned a quick Postgresql database on [Railway](https://railway.app), but you can of course use any other database provider. Make sure the prisma schema is updated to use the correct database._
 
-   # Install dependencies only when needed
-   # TODO: re-evaluate if emulation is still necessary on arm64 after moving to node 18
-   FROM --platform=linux/amd64 node:16-alpine AS deps
-   # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-   RUN apk add --no-cache libc6-compat
-   WORKDIR /app
+#### Deploy to Vercel
 
-   # Install dependencies based on the preferred package manager
-   COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-   RUN \
-     if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-     elif [ -f package-lock.json ]; then npm ci; \
-     elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i; \
-     else echo "Lockfile not found." && exit 1; \
-     fi
+Let's deploy the Next.js application to [Vercel](https://vercel.com/). If you have ever deployed a Turborepo app there, the steps are quite straightforward. You can also read the [official Turborepo guide](https://vercel.com/docs/concepts/monorepos/turborepo) on deploying to Vercel.
 
-   ########################
-   #        BUILDER       #
-   ########################
+1. Create a new project on Vercel, select the `apps/nextjs` folder as the root directory and apply the following build settings:
 
-   # Rebuild the source code only when needed
-   # TODO: re-evaluate if emulation is still necessary on arm64 after moving to node 18
-   FROM --platform=linux/amd64 node:16-alpine AS builder
+<img width="927" alt="Vercel deployment settings" src="https://user-images.githubusercontent.com/11340449/201974887-b6403a32-5570-4ce6-b146-c486c0dbd244.png">
 
-   ARG NEXT_PUBLIC_FOO
-   ARG BAR
+> The install command filters out the expo package and saves a few second (and cache size) of dependency installation. The build command makes us build the application using Turbo.
 
-   WORKDIR /app
-   COPY --from=deps /app/node_modules ./node_modules
-   COPY . .
+2. Add your `DATABASE_URL` environment variable.
 
-   # Next.js collects completely anonymous telemetry data about general usage.
-   # Learn more here: https://nextjs.org/telemetry
-   # Uncomment the following line in case you want to disable telemetry during the build.
-   # ENV NEXT_TELEMETRY_DISABLED 1
+3. Done! Your app should successfully deploy. Assign your domain and use that instead of `localhost` for the `url` in the Expo app so that your Expo app can communicate with your backend when you are not in development.
 
-   RUN \
-     if [ -f yarn.lock ]; then yarn build; \
-     elif [ -f package-lock.json ]; then npm run build; \
-     elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm run build; \
-     else echo "Lockfile not found." && exit 1; \
-     fi
+### Expo
 
-   ########################
-   #        RUNNER        #
-   ########################
+Deploying your Expo application works slightly differently compared to Next.js on the web. Instead of "deploying" your app online, you need to submit production builds of your app to the app stores, like [Apple App Store](https://www.apple.com/app-store/) and [Google Play](https://play.google.com/store/apps). You can read the full [Distributing your app](https://docs.expo.dev/distribution/introduction/), including best practices, in the Expo docs.
 
-   # Production image, copy all the files and run next
-   # TODO: re-evaluate if emulation is still necessary after moving to node 18
-   FROM --platform=linux/amd64 node:16-alpine AS runner
-   # WORKDIR /usr/app
-   WORKDIR /app
-
-   ENV NODE_ENV production
-   # Uncomment the following line in case you want to disable telemetry during runtime.
-   # ENV NEXT_TELEMETRY_DISABLED 1
-
-   RUN addgroup --system --gid 1001 nodejs
-   RUN adduser --system --uid 1001 nextjs
-
-   COPY --from=builder /app/next.config.mjs ./
-   COPY --from=builder /app/public ./public
-   COPY --from=builder /app/package.json ./package.json
-
-   # Automatically leverage output traces to reduce image size
-   # https://nextjs.org/docs/advanced-features/output-file-tracing
-   COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-   COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-   USER nextjs
-
-   EXPOSE 3000
-
-   ENV PORT 3000
-
-   CMD ["node", "server.js"]
-   ```
-
-  </details>
-
-5. To build and run this image locally, run:
+1. Let's start by setting up [EAS Build](https://docs.expo.dev/build/introduction/), which is short for Expo Application Services. The build service helps you create builds of your app, without requiring a full native development setup. The commands below are a summary of [Creating your first build](https://docs.expo.dev/build/setup/).
 
    ```bash
-   docker build -t ct3a -e NEXT_PUBLIC_FOO=foo .
-   docker run -p 3000:3000 -e BAR="bar" ct3a
+   // Install the EAS CLI
+   $ pnpm add -g eas-cli
+
+   // Log in with your Expo account
+   $ eas login
+
+   // Configure your Expo app
+   $ cd apps/expo
+   $ eas build:configure
    ```
 
-6. You can also use a PaaS such as [Railway's](https://railway.app) automated [Dockerfile deployments](https://docs.railway.app/deploy/dockerfiles) to deploy your app.
+2. After the initial setup, you can create your first build. You can build for Android and iOS platforms and use different [**eas.json** build profiles](https://docs.expo.dev/build-reference/eas-json/) to create production builds or development, or test builds. Let's make a production build for iOS.
 
-### Docker Compose
-
-You can also use docker compose to build the image and run the container.
-
-1. Follow steps 1-4 above
-
-2. Create a `docker-compose.yml` file with the following:
-
-   <details>
-   <summary>docker-compose.yml</summary>
-
-   ```yaml
-   version: "3.9"
-   services:
-     app:
-       platform: "linux/amd64"
-       build:
-         context: .
-         dockerfile: Dockerfile
-         args:
-           NEXT_PUBLIC_FOO: "foo"
-       working_dir: /app
-       ports:
-         - "3000:3000"
-       image: t3-app
-       environment:
-         - BAR=bar
+   ```
+   $ eas build --platform ios --profile production
    ```
 
-   </details>
+   > If you don't specify the `--profile` flag, EAS uses the `production` profile by default.
 
-3. Run this using `docker compose up`.
+3. Now that you have your first production build, you can submit this to the stores. [EAS Submit](https://docs.expo.dev/submit/introduction/) can help you send the build to the stores.
 
-### Further reading
+   ```
+   $ eas submit --platform ios --latest
+   ```
 
-Here are some useful references you can further look into:
+   > You can also combine build and submit in a single command, using `eas build ... --auto-submit`.
 
-- [Dockerfile reference](https://docs.docker.com/engine/reference/builder/)
-- [Compose file version 3 reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)
-- [Docker CLI reference](https://docs.docker.com/engine/reference/commandline/docker/)
-- [Docker Compose CLI reference](https://docs.docker.com/compose/reference/)
+4. Before you can get your app in the hands of your users, you'll have to provide additional information to the app stores. This includes screenshots, app information, privacy policies, etc. _While still in preview_, [EAS Metadata](https://docs.expo.dev/eas/metadata/) can help you with most of this information.
 
-## Useful resources
+5. Once everything is approved, your users can finally enjoy your app. Let's say you spotted a small typo; you'll have to create a new build, submit it to the stores, and wait for approval before you can resolve this issue. In these cases, you can use EAS Update to quickly send a small bugfix to your users without going through this long process. Let's start by setting up EAS Update.
 
-Here are some resources that we commonly refer to:
+   The steps below summarize the [Getting started with EAS Update](https://docs.expo.dev/eas-update/getting-started/#configure-your-project) guide.
 
-- [Protecting routes with Next-Auth.js](https://next-auth.js.org/configuration/nextjs#unstable_getserversession)
+   ```bash
+   // Add the `expo-updates` library to your Expo app
+   $ cd apps/expo
+   $ pnpm expo install expo-updates
+
+   // Configure EAS Update
+   $ eas update:configure
+   ```
+
+6. Before we can send out updates to your app, you have to create a new build and submit it to the app stores. For every change that includes native APIs, you have to rebuild the app and submit the update to the app stores. See steps 2 and 3.
+
+7. Now that everything is ready for updates, let's create a new update for `production` builds. With the `--auto` flag, EAS Update uses your current git branch name and commit message for this update. See [How EAS Update works](https://docs.expo.dev/eas-update/how-eas-update-works/#publishing-an-update) for more information.
+
+   ```bash
+   $ cd apps/expo
+   $ eas update --auto
+   ```
+
+   > Your OTA (Over The Air) updates must always follow the app store's rules. You can't change your app's primary functionality without getting app store approval. But this is a fast way to update your app for minor changes and bug fixes.
+
+8. Done! Now that you have created your production build, submitted it to the stores, and installed EAS Update, you are ready for anything!
+
+## References
+
+The stack originates from [create-t3-app](https://github.com/t3-oss/create-t3-app).
+
+A [blog post](https://jumr.dev/blog/t3-turbo) where I wrote how to migrate a T3 app into this.
