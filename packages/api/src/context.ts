@@ -1,4 +1,4 @@
-import { getServerSession, type Session } from "@hoist/auth";
+import { type Session, getServerSession } from "@hoist/auth";
 import { prisma } from "@hoist/db";
 import { type inferAsyncReturnType } from "@trpc/server";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
@@ -6,9 +6,9 @@ import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 /**
  * Replace this with an object if you want to pass things to createContextInner
  */
-type CreateContextOptions = {
+interface CreateContextOptions {
   session: Session | null;
-};
+}
 
 /** Use this helper for:
  *  - testing, where we dont have to Mock Next.js' req/res

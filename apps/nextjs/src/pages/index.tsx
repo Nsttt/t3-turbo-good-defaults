@@ -1,9 +1,10 @@
+import type { AppRouter } from "@hoist/api";
+import type { inferProcedureOutput } from "@trpc/server";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { signIn, signOut } from "next-auth/react";
+
 import { trpc } from "../utils/trpc";
-import type { inferProcedureOutput } from "@trpc/server";
-import type { AppRouter } from "@hoist/api";
 
 const PostCard: React.FC<{
   post: inferProcedureOutput<AppRouter["post"]["all"]>[number];
@@ -20,7 +21,6 @@ const PostCard: React.FC<{
 
 const Home: NextPage = () => {
   const postQuery = trpc.post.all.useQuery();
-
   return (
     <>
       <Head>
@@ -34,11 +34,10 @@ const Home: NextPage = () => {
             Create <span className="text-[hsl(280,100%,70%)]">T3</span> Turbo
           </h1>
           <AuthShowcase />
-
           <div className="flex h-[60vh] justify-center overflow-y-scroll px-4 text-2xl">
             {postQuery.data ? (
               <div className="flex flex-col gap-4">
-                {postQuery.data?.map((p) => {
+                {postQuery.data.map((p) => {
                   return <PostCard key={p.id} post={p} />;
                 })}
               </div>
@@ -64,12 +63,12 @@ const AuthShowcase: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      {session?.user && (
+      {session?.user ? (
         <p className="text-center text-2xl text-white">
-          {session && <span>Logged in as {session?.user?.name}</span>}
+          <span>Logged in as {session.user.name}</span>
           {secretMessage && <span> - {secretMessage}</span>}
         </p>
-      )}
+      ) : null}
       <button
         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
         onClick={session ? () => signOut() : () => signIn()}
